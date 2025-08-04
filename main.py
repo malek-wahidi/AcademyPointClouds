@@ -22,9 +22,21 @@ def main():
 
     print(f"Registration took {end_time - start_time:.4f} seconds.")
 
+    # Compute registration accuracy metrics
+
     # Apply the estimated transformation
     pcd_transformed.transform(transformation)
 
+    # Compute registration accuracy metrics
+    distance_threshold = 0.02  # reasonable threshold for correspondence
+    evaluation = o3d.pipelines.registration.evaluate_registration(
+        pcd, pcd_transformed, distance_threshold)
+    
+    print(f"Registration accuracy metrics:")
+    print(f"  Fitness: {evaluation.fitness*100:.2f} %")  # fraction of target points with correspondences found
+    print(f"  Inlier RMSE: {evaluation.inlier_rmse:.4f}")  # RMSE of corresponding points
+    print(f"  Correspondences found: {len(evaluation.correspondence_set)}")
+    
     # Visualize the alignment
     print("Visualizing source and target point clouds after registration.")
     o3d.visualization.draw_geometries([pcd, pcd_transformed],
