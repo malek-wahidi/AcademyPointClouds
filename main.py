@@ -10,6 +10,17 @@ def main():
     pcd.paint_uniform_color([1, 0.706, 0])  # paint source point cloud red
     pcd_transformed = o3d.io.read_point_cloud(demo_icp_pcds.paths[1])  # load target point cloud
     pcd_transformed.paint_uniform_color([0, 0.651, 0.929])  # paint target point cloud green
+    
+    # Apply additional transformation to push point clouds further apart
+    # Create a more challenging initial misalignment
+    additional_rotation = o3d.geometry.get_rotation_matrix_from_xyz([0.3, 0.5, 0.2])  # radians
+    additional_translation = np.array([2.0, 1.5, 1.0])  # larger translation
+    additional_transform = np.eye(4)
+    additional_transform[:3, :3] = additional_rotation
+    additional_transform[:3, 3] = additional_translation
+    
+    pcd_transformed.transform(additional_transform)
+    print(f"Applied additional misalignment: rotation={[0.3, 0.5, 0.2]} rad, translation={additional_translation}")
 
     print("Visualizing source and target point clouds before registration.")
     o3d.visualization.draw_geometries([pcd, pcd_transformed],
