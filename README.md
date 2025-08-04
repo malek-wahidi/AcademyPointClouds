@@ -33,3 +33,13 @@ The goal of this assignment is to implement a point cloud registration algorithm
     *   **Correctness:** How well your algorithm aligns the point clouds.
     *   **Performance:** The execution time of your registration function.
     *   **Code Quality:** The clarity, and efficiency of your implementation.
+
+## Troubleshooting
+
+If you encounter errors related to Open3D visualization (such as `GLFW Error: Wayland: The platform does not support setting the window position` or `Failed creating OpenGL window`) on Linux systems using Wayland, try running the script with X11 compatibility:
+
+```bash
+XDG_SESSION_TYPE=x11 uv run main.py
+```
+
+This can help resolve issues with OpenGL window creation in some desktop environments.
