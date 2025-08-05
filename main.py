@@ -39,7 +39,7 @@ def main():
     pcd_transformed.transform(transformation)
 
     # Compute registration accuracy metrics
-    distance_threshold = 0.02  # reasonable threshold for correspondence
+    distance_threshold = 0.02 # reasonable threshold for correspondence
     evaluation = o3d.pipelines.registration.evaluate_registration(
         pcd, pcd_transformed, distance_threshold)
     
