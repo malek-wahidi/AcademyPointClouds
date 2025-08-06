@@ -37,7 +37,7 @@ def execute_global_registration(source_down, target_down, source_fpfh,
             o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
             o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
         ],
-        criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(100000, 0.999)
+        criteria=o3d.pipelines.registration.RANSACConvergenceCriteria(1000, 0.95)
     )
     return result
 
@@ -61,10 +61,7 @@ def refine_registration(source, target, init_transformation, voxel_size):
 
 
 def register(pcd1: o3d.geometry.PointCloud, pcd2: o3d.geometry.PointCloud) -> np.ndarray:
-    """
-    Open3D recommended pipeline: FPFH + RANSAC for global, then ICP (point-to-plane) refinement.
-    """
-    voxel_size = 0.05
+    voxel_size = 0.1
 
     print(":: Preprocessing point clouds...")
     source_down, source_fpfh = preprocess_point_cloud(pcd1, voxel_size)

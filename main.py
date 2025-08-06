@@ -24,6 +24,7 @@ def main():
     print("Visualizing source and target point clouds before registration.")
     o3d.visualization.draw_geometries([pcd, pcd_transformed],
                                       window_name="Before Registration")
+    
 
     # Time the registration function
     start_time = time.time()
@@ -31,7 +32,6 @@ def main():
     end_time = time.time()
 
     print(f"Registration took {end_time - start_time:.4f} seconds.")
-
     # Compute registration accuracy metrics
 
     # Apply the estimated transformation to source pcd
