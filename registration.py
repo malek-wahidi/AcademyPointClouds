@@ -91,14 +91,54 @@ def refine_registration_with_icp(source_down, target_down, init_transformation, 
 
     return result_icp.transformation
 
+# Step 3.2: Implement Multiscale ICP for better convergence by using different voxel sizes.
+
+def multiscale_icp(source, target, init_transformation):
+    voxel_levels = [0.05, 0.03, 0.01]
+    max_iters = [50, 30, 14]
+
+    current_transformation = init_transformation
+
+    for size in range(len(voxel_levels)):
+        voxel_size = voxel_levels[size]
+        iter = max_iters[size]
+
+        print(f"\n[Multiscale ICP] Level {size+1} - voxel: {voxel_size}, max_iter: {iter}")
+        source_down = source.voxel_down_sample(voxel_size)
+        target_down = target.voxel_down_sample(voxel_size)
+
+        source_down.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size * 2, max_nn=30)
+        )
+        target_down.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=voxel_size * 2, max_nn=30)
+        )
+
+        threshold = voxel_size * 1.5
+
+        result_icp = o3d.pipelines.registration.registration_icp(
+            source_down,
+            target_down,
+            threshold,
+            current_transformation,
+            o3d.pipelines.registration.TransformationEstimationPointToPlane(),
+            o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=iter)
+        )
+
+        current_transformation = result_icp.transformation
+
+        # This is a local evaluation step to check the quality of the registration at this level.
+        print(f"  -> Fitness: {result_icp.fitness:.2%}, RMSE: {result_icp.inlier_rmse:.6f}")
+
+    return current_transformation
+
 
 def register(pcd1: o3d.geometry.PointCloud, pcd2: o3d.geometry.PointCloud) -> np.ndarray:
     downpcd1, fpfh1 = preprocess_point_cloud(pcd1, voxel_size=0.05)
     downpcd2, fpfh2 = preprocess_point_cloud(pcd2, voxel_size=0.05)
 
-    ransac_trans = run_fast_global_registration(downpcd1, downpcd2, fpfh1, fpfh2, voxel_size=0.05)
+    fgr_trans = run_fast_global_registration(downpcd1, downpcd2, fpfh1, fpfh2, voxel_size=0.05)
 
-    print("[INFO] Running local refinement")
-    icp_trans = refine_registration_with_icp(downpcd1, downpcd2, ransac_trans, voxel_size=0.05)
+    final_trans = multiscale_icp(pcd1, pcd2, fgr_trans)
 
-    return icp_trans
+    return final_trans
