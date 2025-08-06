@@ -32,6 +32,7 @@ def preprocess_point_cloud(pcd: o3d.geometry.PointCloud, voxel_size: float):
 # I cannot use ICP (local registration) directly here because the point clouds are too misaligned.
 
 def run_ransac_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size):
+    print("[INFO] Running global registration")
     distance_threshold = voxel_size * 1.5
 
     result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
@@ -39,7 +40,7 @@ def run_ransac_registration(source_down, target_down, source_fpfh, target_fpfh, 
         target_down,
         source_fpfh,
         target_fpfh,
-        mutual_filter=True,  # Can set to False if too slow
+        mutual_filter=True,  
         max_correspondence_distance=distance_threshold,
         estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPoint(False),
         ransac_n=3,
@@ -51,6 +52,26 @@ def run_ransac_registration(source_down, target_down, source_fpfh, target_fpfh, 
     )
 
     return result.transformation
+
+# Step 2.1: Implement Fast Global Registration (FGR) as an alternative to RANSAC.
+
+def run_fast_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size):
+    print("[INFO] Running Fast Global Registration")
+    
+    distance_threshold = voxel_size * 1.5  
+
+    result = o3d.pipelines.registration.registration_fgr_based_on_feature_matching(
+        source_down,
+        target_down,
+        source_fpfh,
+        target_fpfh,
+        o3d.pipelines.registration.FastGlobalRegistrationOption(
+            maximum_correspondence_distance=distance_threshold
+        )
+    )
+
+    return result.transformation
+
 
 # Step 3: Refine the registration using ICP (Iterative Closest Point) algorithm.
 # This step will fine-tune the alignment found by RANSAC.
@@ -75,8 +96,7 @@ def register(pcd1: o3d.geometry.PointCloud, pcd2: o3d.geometry.PointCloud) -> np
     downpcd1, fpfh1 = preprocess_point_cloud(pcd1, voxel_size=0.05)
     downpcd2, fpfh2 = preprocess_point_cloud(pcd2, voxel_size=0.05)
 
-    print("[INFO] Running global registration")
-    ransac_trans = run_ransac_registration(downpcd1, downpcd2, fpfh1, fpfh2, voxel_size=0.05)
+    ransac_trans = run_fast_global_registration(downpcd1, downpcd2, fpfh1, fpfh2, voxel_size=0.05)
 
     print("[INFO] Running local refinement")
     icp_trans = refine_registration_with_icp(downpcd1, downpcd2, ransac_trans, voxel_size=0.05)
