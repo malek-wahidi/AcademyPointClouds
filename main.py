@@ -29,6 +29,8 @@ def main():
     # Time the registration function
     start_time = time.time()
     transformation = register(pcd, pcd_transformed)
+    print("Transformation matrix:\n", transformation)
+
     end_time = time.time()
 
     print(f"Registration took {end_time - start_time:.4f} seconds.")
@@ -55,4 +57,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
