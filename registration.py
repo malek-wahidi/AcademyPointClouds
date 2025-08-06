@@ -32,14 +32,29 @@ def execute_fast_global_registration(source_down, target_down, source_fpfh, targ
     return result
 
 
+def refine_registration(source, target, initial_transformation, voxel_size):
+    distance_threshold = voxel_size * 1.5
+    print(f":: Refining registration with ICP and distance threshold {distance_threshold:.3f}")
+    result_icp = o3d.pipelines.registration.registration_icp(
+        source, target, distance_threshold,
+        initial_transformation,
+        o3d.pipelines.registration.TransformationEstimationPointToPlane())
+    return result_icp
+
+
 def register(pcd1: o3d.geometry.PointCloud, pcd2: o3d.geometry.PointCloud) -> np.ndarray:
-    voxel_size = 0.04
+    voxel_size = 0.04  # Smaller voxel size improves accuracy
 
     source_down, source_fpfh = preprocess_point_cloud(pcd1, voxel_size)
     target_down, target_fpfh = preprocess_point_cloud(pcd2, voxel_size)
 
-    result = execute_fast_global_registration(
+    result_fgr = execute_fast_global_registration(
         source_down, target_down, source_fpfh, target_fpfh, voxel_size)
 
-    print(f"FGR Result - Fitness: {result.fitness:.4f}, RMSE: {result.inlier_rmse:.6f}")
-    return result.transformation
+    print(f"FGR Result - Fitness: {result_fgr.fitness:.4f}, RMSE: {result_fgr.inlier_rmse:.6f}")
+
+    result_icp = refine_registration(pcd1, pcd2, result_fgr.transformation, voxel_size)
+
+    print(f"ICP Refinement - Fitness: {result_icp.fitness:.4f}, RMSE: {result_icp.inlier_rmse:.6f}")
+
+    return result_icp.transformation
