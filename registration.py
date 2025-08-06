@@ -1,6 +1,12 @@
 import open3d as o3d
 import numpy as np
 
+# Step 0: Remove outliers from the point clouds to improve registration quality.
+# This hasn't improved accuracy at all and added to the run time
+def remove_outliers(pcd, nb_neighbors=20, std_ratio=2.0):
+    filtered_pcd, _ = pcd.remove_statistical_outlier(nb_neighbors=nb_neighbors, std_ratio=std_ratio)
+    return filtered_pcd
+
 # Step 1: Preprocess the point clouds using Voxel Downsampling, Normal Estimation and FPFH Feature Computation
 # This function will be used to prepare the point clouds for registration.
 
@@ -74,7 +80,7 @@ def run_fast_global_registration(source_down, target_down, source_fpfh, target_f
 
 
 # Step 3: Refine the registration using ICP (Iterative Closest Point) algorithm.
-# This step will fine-tune the alignment found by RANSAC.
+# This step will fine-tune the alignment found by RANSAC (or FGR as an alternative).
 # I will use point-to-plane ICP for better accuracy.
 
 def refine_registration_with_icp(source_down, target_down, init_transformation, voxel_size):
@@ -134,11 +140,20 @@ def multiscale_icp(source, target, init_transformation):
 
 
 def register(pcd1: o3d.geometry.PointCloud, pcd2: o3d.geometry.PointCloud) -> np.ndarray:
-    downpcd1, fpfh1 = preprocess_point_cloud(pcd1, voxel_size=0.05)
-    downpcd2, fpfh2 = preprocess_point_cloud(pcd2, voxel_size=0.05)
+    voxel_size = 0.05 
 
-    fgr_trans = run_fast_global_registration(downpcd1, downpcd2, fpfh1, fpfh2, voxel_size=0.05)
+    downpcd1, fpfh1 = preprocess_point_cloud(pcd1, voxel_size)
+    downpcd2, fpfh2 = preprocess_point_cloud(pcd2, voxel_size)
 
-    final_trans = multiscale_icp(pcd1, pcd2, fgr_trans)
+    fgr_trans = run_fast_global_registration(downpcd1, downpcd2, fpfh1, fpfh2, voxel_size)
 
+    final_trans = refine_registration_with_icp(downpcd1, downpcd2, fgr_trans, voxel_size)
+
+    #final_trans = multiscale_icp(pcd1, pcd2, fgr_trans)
+    
+    # I did stick to the FGR + ICP approach since it is faster, with the same accuracy as multiscale ICP in most cases.
     return final_trans
+
+
+# I explored another alternative, which is to use deep learning based registration methods (like FCGF or PointNetLk) but this would add significant complexity
+# and dependencies for just small improvements in registration accuracy. Sticking to traditional methods like FGR and ICP is more practical in this case.
