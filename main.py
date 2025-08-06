@@ -7,9 +7,9 @@ def main():
     # Load two misaligned point clouds from Open3D's demo dataset
     demo_icp_pcds = o3d.data.DemoICPPointClouds()
     pcd = o3d.io.read_point_cloud(demo_icp_pcds.paths[0])  # load source point cloud
-    pcd.paint_uniform_color([1, 0.706, 0])  # paint source point cloud red
+    pcd.paint_uniform_color([1, 0, 0])  # paint source point cloud red
     pcd_transformed = o3d.io.read_point_cloud(demo_icp_pcds.paths[1])  # load target point cloud
-    pcd_transformed.paint_uniform_color([0, 0.651, 0.929])  # paint target point cloud green
+    pcd_transformed.paint_uniform_color([0, 1, 0])  # paint target point cloud green
     
     # Apply extra transformation to increase misalignment between point clouds
     additional_rotation = o3d.geometry.get_rotation_matrix_from_xyz([0.3, 0.5, 0.2])  # rotation in radians
