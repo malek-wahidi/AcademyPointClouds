@@ -32,8 +32,6 @@ def main():
 
     print(f"Registration took {end_time - start_time:.4f} seconds.")
 
-    # Compute registration accuracy metrics
-
     # Apply the estimated transformation to source pcd
     pcd.transform(transformation)
 
