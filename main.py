@@ -32,8 +32,6 @@ def main():
 
     print(f"Registration took {end_time - start_time:.4f} seconds.")
 
-    # Compute registration accuracy metrics
-
     # Apply the estimated transformation to source pcd
     pcd.transform(transformation)
 
@@ -42,6 +40,9 @@ def main():
     evaluation = o3d.pipelines.registration.evaluate_registration(
         pcd, pcd_transformed, distance_threshold)
     
+    # Printing the final 4x4 transformation matrix
+    print("[RESULT] Final transformation matrix:\n", transformation)
+
     print(f"Registration accuracy metrics:")
     print(f"  Fitness: {evaluation.fitness*100:.2f} %")  # fraction of target points with correspondences found
     print(f"  Inlier RMSE: {evaluation.inlier_rmse:.4f}")  # RMSE of corresponding points
