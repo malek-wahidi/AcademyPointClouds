@@ -88,12 +88,3 @@ if __name__ == "__main__":
         pcds_down[point_id].transform(pose_graph.nodes[point_id].pose)
     o3d.visualization.draw_geometries(pcds_down)
 
-    print("Make a combined point cloud")
-    pcds = load_point_clouds(voxel_size)
-    pcd_combined = o3d.geometry.PointCloud()
-    for point_id in range(len(pcds)):
-        pcds[point_id].transform(pose_graph.nodes[point_id].pose)
-        pcd_combined += pcds[point_id]
-    pcd_combined_down = pcd_combined.voxel_down_sample(voxel_size=voxel_size)
-    o3d.io.write_point_cloud("multiway_registration.pcd", pcd_combined_down)
-    o3d.visualization.draw_geometries([pcd_combined_down])
