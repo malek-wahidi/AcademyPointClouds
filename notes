@@ -1,0 +1,5 @@
+1. global registration point-to-plane: fast 
+			point-topoint: more accurate (negligible difference)
+2. changed voxel_size and iterations and confidence (still around 1s)
+3. used fgr (61% 0.3s)
+4. added icp refinement (62% 1s)

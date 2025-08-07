@@ -5,12 +5,12 @@ def preprocess_point_cloud(pcd, voxel_size):
     print(f":: Downsample with voxel size {voxel_size}")
     pcd_down = pcd.voxel_down_sample(voxel_size)
 
-    radius_normal = voxel_size * 3
+    radius_normal = voxel_size * 2
     print(f":: Estimate normal with search radius {radius_normal:.3f}")
     pcd_down.estimate_normals(
         o3d.geometry.KDTreeSearchParamHybrid(radius=radius_normal, max_nn=30))
 
-    radius_feature = voxel_size * 6
+    radius_feature = voxel_size * 5
     print(f":: Compute FPFH feature with search radius {radius_feature:.3f}")
     pcd_fpfh = o3d.pipelines.registration.compute_fpfh_feature(
         pcd_down,
@@ -32,18 +32,8 @@ def execute_fast_global_registration(source_down, target_down, source_fpfh, targ
     return result
 
 
-def refine_registration(source, target, initial_transformation, voxel_size):
-    distance_threshold = voxel_size * 1.5
-    print(f":: Refining registration with ICP and distance threshold {distance_threshold:.3f}")
-    result_icp = o3d.pipelines.registration.registration_icp(
-        source, target, distance_threshold,
-        initial_transformation,
-        o3d.pipelines.registration.TransformationEstimationPointToPlane())
-    return result_icp
-
-
 def register(pcd1: o3d.geometry.PointCloud, pcd2: o3d.geometry.PointCloud) -> np.ndarray:
-    voxel_size = 0.04  # Smaller voxel size improves accuracy
+    voxel_size = 0.04
 
     source_down, source_fpfh = preprocess_point_cloud(pcd1, voxel_size)
     target_down, target_fpfh = preprocess_point_cloud(pcd2, voxel_size)
@@ -53,8 +43,4 @@ def register(pcd1: o3d.geometry.PointCloud, pcd2: o3d.geometry.PointCloud) -> np
 
     print(f"FGR Result - Fitness: {result_fgr.fitness:.4f}, RMSE: {result_fgr.inlier_rmse:.6f}")
 
-    result_icp = refine_registration(pcd1, pcd2, result_fgr.transformation, voxel_size)
-
-    print(f"ICP Refinement - Fitness: {result_icp.fitness:.4f}, RMSE: {result_icp.inlier_rmse:.6f}")
-
-    return result_icp.transformation
+    return result_fgr.transformation
