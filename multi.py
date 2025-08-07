@@ -64,59 +64,36 @@ def full_registration(pcds, max_correspondence_distance_coarse,
 
 
 if __name__ == "__main__":
-
-
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
-
-    # Load point clouds
     pcds_down = load_point_clouds(voxel_size)
-    source, target = pcds_down[0], pcds_down[1]
+    o3d.visualization.draw_geometries(pcds_down)
 
-    # Run pairwise ICP registration
-    transformation_icp, information_icp = pairwise_registration(source, target)
+    print("Full registration ...")
+    pose_graph = full_registration(pcds_down,
+                                   max_correspondence_distance_coarse,
+                                   max_correspondence_distance_fine)
 
-    # Print transformation matrix
-    print("Transformation matrix (from source to target):")
-    print(transformation_icp)
+    print("Optimizing PoseGraph ...")
+    option = o3d.pipelines.registration.GlobalOptimizationOption(
+        max_correspondence_distance=max_correspondence_distance_fine,
+        edge_prune_threshold=0.25,
+        reference_node=0)
+    o3d.pipelines.registration.global_optimization(
+        pose_graph, o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
+        o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(), option)
 
-    # Apply transformation to source point cloud
-    source.transform(transformation_icp)
+    print("Transform points and display")
+    for point_id in range(len(pcds_down)):
+        print(pose_graph.nodes[point_id].pose)
+        pcds_down[point_id].transform(pose_graph.nodes[point_id].pose)
+    o3d.visualization.draw_geometries(pcds_down)
 
-    # Visualize alignment (optional)
-    o3d.visualization.draw_geometries([source, target])
-
-
-
-    # o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
-    # pcds_down = load_point_clouds(voxel_size)
-    # o3d.visualization.draw_geometries(pcds_down)
-
-    # print("Full registration ...")
-    # pose_graph = full_registration(pcds_down,
-    #                                max_correspondence_distance_coarse,
-    #                                max_correspondence_distance_fine)
-
-    # print("Optimizing PoseGraph ...")
-    # option = o3d.pipelines.registration.GlobalOptimizationOption(
-    #     max_correspondence_distance=max_correspondence_distance_fine,
-    #     edge_prune_threshold=0.25,
-    #     reference_node=0)
-    # o3d.pipelines.registration.global_optimization(
-    #     pose_graph, o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
-    #     o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(), option)
-
-    # print("Transform points and display")
-    # for point_id in range(len(pcds_down)):
-    #     print(pose_graph.nodes[point_id].pose)
-    #     pcds_down[point_id].transform(pose_graph.nodes[point_id].pose)
-    # o3d.visualization.draw_geometries(pcds_down)
-
-    # print("Make a combined point cloud")
-    # pcds = load_point_clouds(voxel_size)
-    # pcd_combined = o3d.geometry.PointCloud()
-    # for point_id in range(len(pcds)):
-    #     pcds[point_id].transform(pose_graph.nodes[point_id].pose)
-    #     pcd_combined += pcds[point_id]
-    # pcd_combined_down = pcd_combined.voxel_down_sample(voxel_size=voxel_size)
-    # o3d.io.write_point_cloud("multiway_registration.pcd", pcd_combined_down)
-    # o3d.visualization.draw_geometries([pcd_combined_down])
+    print("Make a combined point cloud")
+    pcds = load_point_clouds(voxel_size)
+    pcd_combined = o3d.geometry.PointCloud()
+    for point_id in range(len(pcds)):
+        pcds[point_id].transform(pose_graph.nodes[point_id].pose)
+        pcd_combined += pcds[point_id]
+    pcd_combined_down = pcd_combined.voxel_down_sample(voxel_size=voxel_size)
+    o3d.io.write_point_cloud("multiway_registration.pcd", pcd_combined_down)
+    o3d.visualization.draw_geometries([pcd_combined_down])
