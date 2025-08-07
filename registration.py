@@ -31,7 +31,7 @@ def register(pcd1, pcd2):
     - Reduced iterations where appropriate
     """
     # Optimized voxel size - slightly larger for speed but still accurate
-    voxel_size = 0.05  # Increased from 0.03 for better speed
+    voxel_size = 0.2  # Increased from 0.03 for better speed
     
     # Preprocess both point clouds
     print(f"Original point clouds: {len(pcd1.points)} and {len(pcd2.points)} points")
